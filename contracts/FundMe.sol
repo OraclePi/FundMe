@@ -35,6 +35,10 @@ contract FundMe{
         _; // code executed after the above line
     }
 
+    event receiveCalled(address sender,uint256 value);
+
+    event fallbackCalled(address sender,uint256 value,bytes data);
+
     function fund() public onlyOWNER payable {
         if(msg.value.getConversionRate() <= MINIUM_USD) {
             revert notEnoughUsd();
@@ -69,6 +73,15 @@ contract FundMe{
         }
     }
 
+    receive() external payable {
+        emit receiveCalled(msg.sender,msg.value);
+        fund();
+    }
+
+    fallback() external payable {
+        emit fallbackCalled(msg.sender,msg.value,msg.data);
+        fund();
+    }
 
     
 
