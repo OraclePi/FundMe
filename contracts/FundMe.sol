@@ -1,22 +1,31 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
-import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
+import {priceConverter} from "./priceConverter.sol";
 
 contract FundMe{
 
+    using priceConverter for uint256;
+    
     uint256 public miniumUsd = 1e18;
 
-    AggregatorV3Interface v3Interface;
+    uint256 public version;
 
-    constructor(){
-        v3Interface = AggregatorV3Interface(0x694AA1769357215DE4FAC081bf1f309aDC325306);
-    }
-    
+    uint256 public priceToUsd;
+
+    address[] public funders;
+
+
+    mapping (address => uint256) public addressToAmountFunded;
+
 
 
     function fund() public payable {
-        require(getConversionRate(msg.value) >= miniumUsd ,"1 ETH at least is required");
+        require(msg.value.getConversionRate() >= miniumUsd ,"1 USD at least is required");
+        funders.push(msg.sender);
+        version = priceConverter.getVersion();
+        priceToUsd = priceConverter.getPrice();
+        addressToAmountFunded[msg.sender] += msg.value;
     }
 
     // function withdraw() public {
@@ -24,21 +33,7 @@ contract FundMe{
     // }
 
 
-    function getPrice() public view returns(uint256){
-        (,int256 price,,,) = v3Interface.latestRoundData();
-        // 8 after dot
-        return uint256(price*1e10);
-    }
-
-    function getConversionRate(uint256 ethAmount) public view returns(uint256){
-        uint256 ethPrice = getPrice();
-        uint256 ethAmountInUsd = (ethPrice * ethAmount) / 1e18;
-        return ethAmountInUsd; 
-    }
-
-    function getVersion() public view returns(uint256){
-        return v3Interface.version();
-    }
+    
 
 
 }
